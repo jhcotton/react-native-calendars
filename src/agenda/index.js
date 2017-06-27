@@ -122,6 +122,9 @@ export default class AgendaView extends Component {
       duration: 300
     }).start();
     this.calendar.scrollToDay(this.state.selectedDay, 100 - ((this.screenHeight / 2) - 16), true);
+    if (this.props.onCalendarExpanded) {
+      this.props.onCalendarExpanded();
+    }
   }
 
   chooseDay(d) {
@@ -131,9 +134,13 @@ export default class AgendaView extends Component {
       selectedDay: day.clone()
     });
     if (this.state.calendarScrollable) {
+      //Was expanded if was scrollable
       this.setState({
         topDay: day.clone()
       });
+      if (this.props.onCalendarClosed) {
+        this.props.onCalendarClosed();
+      }
     }
     Animated.timing(this.state.openAnimation, {
       toValue: 0,
@@ -144,7 +151,18 @@ export default class AgendaView extends Component {
       this.props.loadItemsForMonth(xdateToData(day));
     }
     if (this.props.onDayPress) {
-      this.props.onDayPress(xdateToData(day));
+      const item = this.props.items[this.state.selectedDay.toString('yyyy-MM-dd')]
+      this.props.onDayPress(xdateToData(day), item);
+    }
+  }
+
+  renderSelectedDay() {
+    const day = this.state.selectedDay;
+    const item = this.props.items ? this.props.items[this.state.selectedDay.toString('yyyy-MM-dd')] : null;
+    if (this.props.renderDay && item) {
+      return this.props.renderDay(xdateToData(day), item);
+    } else {
+      return this.props.renderEmptyDate();
     }
   }
 
@@ -206,7 +224,7 @@ export default class AgendaView extends Component {
     return (
       <View onLayout={this.onLayout.bind(this)} style={[this.props.style, {flex: 1}]}>
         <View style={this.styles.reservations}>
-          {this.renderReservations()}
+          {this.renderSelectedDay()}
         </View>
         <Animated.View style={calendarStyle}>
           <CalendarList
